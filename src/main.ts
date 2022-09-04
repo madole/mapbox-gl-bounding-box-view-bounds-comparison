@@ -10,15 +10,44 @@ import { BBox, Feature, Polygon } from "geojson";
 mapbox.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN as string;
 
 const MIN_ZOOM_FOR_LG_PITCH = 14;
+const MAX_PITCH_XL = 85;
 const MAX_PITCH_LG = 60;
 const MAX_PITCH_SM = 45;
+
+let isPitchLimited = false;
+const limitPitchCheckbox = document.getElementById(
+  "limit-pitch"
+) as HTMLInputElement;
+
+limitPitchCheckbox.onchange = () => {
+  isPitchLimited = limitPitchCheckbox.checked;
+  if (isPitchLimited) {
+    if (
+      mapA.getPitch() > MAX_PITCH_SM &&
+      mapA.getZoom() < MIN_ZOOM_FOR_LG_PITCH
+    ) {
+      mapA.flyTo({
+        center: mapA.getCenter(),
+        pitch: MAX_PITCH_SM,
+        duration: 200,
+      });
+      // let animation finish before setting max pitch
+      setTimeout(() => {
+        mapA.setMaxPitch(MAX_PITCH_SM);
+      }, 200);
+    } else {
+      mapA.setMaxPitch(MAX_PITCH_LG);
+    }
+  } else {
+    mapA.setMaxPitch(MAX_PITCH_XL);
+  }
+};
 
 const mapA = new mapbox.Map({
   container: "map-a",
   style: "mapbox://styles/mapbox/streets-v11",
   center: [151, -33.5],
   zoom: 9,
-  maxPitch: MAX_PITCH_LG,
 });
 
 const mapB = new mapbox.Map({
@@ -26,7 +55,6 @@ const mapB = new mapbox.Map({
   style: "mapbox://styles/mapbox/streets-v11",
   center: [151, -33.5],
   zoom: 7,
-  maxPitch: MAX_PITCH_LG,
   interactive: false,
 });
 
@@ -149,6 +177,7 @@ mapA.on("load", () => {
     });
 
     mapA.on("moveend", () => {
+      if (!isPitchLimited) return;
       const zoom = mapA.getZoom();
       const pitch = mapA.getPitch();
       if (zoom > MIN_ZOOM_FOR_LG_PITCH) {

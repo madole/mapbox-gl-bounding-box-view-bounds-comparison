@@ -52,3 +52,12 @@ body {
 #map-b {
     cursor: not-allowed;
 }
+
+#limit-pitch-label {
+    position: absolute;
+    left: 10px;
+    bottom: 30px;
+    background-color: #242424;
+    padding: 1em;
+    border-radius: 0.5em;
+}
